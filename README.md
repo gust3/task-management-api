@@ -158,7 +158,7 @@ task-api/
 ### Шаг 1: Клонирование и зависимости
 
 ```
-git clone https://github.com/yourusername/task-management-api.git
+git clone https://github.com/gust3/task-management-api.git
 cd task-management-api
 composer install --no-dev --optimize-autoloader
 ```
