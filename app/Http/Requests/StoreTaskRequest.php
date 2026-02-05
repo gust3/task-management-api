@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\TaskStatus;
 
 class StoreTaskRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class StoreTaskRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'nullable|in:pending,in_progress,completed',
+            'status' => 'required|in:' . TaskStatus::validationRule(),
         ];
     }
 
@@ -35,7 +36,8 @@ class StoreTaskRequest extends FormRequest
             'title.required' => 'Поле "title" обязательно для заполнения',
             'title.string' => 'Поле "title" должно быть строкой',
             'title.max' => 'Поле "title" не должно превышать 255 символов',
-            'status.in' => 'Поле "status" должно быть одним из: pending, in_progress, completed',
+            'status.required' => 'Поле "status" обязательно для заполнения',
+            'status.in' => 'Поле "status" должно быть одним из: ' . TaskStatus::validationRule(),
         ];
     }
 }

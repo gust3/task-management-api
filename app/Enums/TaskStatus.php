@@ -1,22 +1,17 @@
 <?php
 
-
 namespace App\Enums;
 
 enum TaskStatus: string
 {
-case
-    PENDING = 'pending';
-case
-    IN_PROGRESS = 'in_progress';
-case
-    COMPLETED = 'completed';
+    case PENDING = 'pending';
+    case IN_PROGRESS = 'in_progress';
+    case COMPLETED = 'completed';
 
     /**
      * Получить описание статуса
      */
-    public
-    function description(): string
+    public function description(): string
     {
         return match ($this) {
             self::PENDING => 'Задача в ожидании',
@@ -28,8 +23,7 @@ case
     /**
      * Получить все статусы
      */
-    public
-    static function all(): array
+    public static function all(): array
     {
         return array_column(self::cases(), 'value');
     }
@@ -37,12 +31,19 @@ case
     /**
      * Получить все статусы с описаниями
      */
-    public
-    static function allWithDescriptions(): array
+    public static function allWithDescriptions(): array
     {
         return array_combine(
             array_column(self::cases(), 'value'),
             array_map(fn(self $status) => $status->description(), self::cases())
         );
+    }
+
+    /**
+     * Получить строку для валидации (in:pending,in_progress,completed)
+     */
+    public static function validationRule(): string
+    {
+        return implode(',', self::all());
     }
 }

@@ -16,9 +16,10 @@ class TaskControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Устанавливаем локаль двумя способами
-        config(['app.locale' => 'en']);
-        App::setLocale('en');
+        // Устанавливаем локаль из конфигурации приложения
+        $locale = config('app.locale', 'ru');
+        config(['app.locale' => $locale]);
+        App::setLocale($locale);
     }
 
     #[Test]
@@ -29,14 +30,14 @@ class TaskControllerTest extends TestCase
         $task2 = Task::factory()->create(['title' => 'Task 2']);
 
         // ACT: Отправляем GET запрос
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->getJson('/api/tasks');
 
         // ASSERT: Проверяем ответ
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Task list retrieved successfully',
+                'message' => __('messages.success.task_list_retrieved'),
             ])
             ->assertJsonCount(2, 'data')
             ->assertJsonFragment(['title' => 'Task 1'])
@@ -54,14 +55,14 @@ class TaskControllerTest extends TestCase
         ];
 
         // ACT: Отправляем POST запрос
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->postJson('/api/tasks', $data);
 
         // ASSERT: Проверяем ответ и базу данных
         $response->assertStatus(201)
             ->assertJson([
                 'success' => true,
-                'message' => 'Task created successfully',
+                'message' => __('messages.success.task_created'),
             ])
             ->assertJsonFragment($data);
 
@@ -77,14 +78,14 @@ class TaskControllerTest extends TestCase
         ];
 
         // ACT: Отправляем POST запрос
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->postJson('/api/tasks', $data);
 
         // ASSERT: Проверяем ошибку валидации
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => __('messages.error.validation_failed'),
             ])
             ->assertJsonValidationErrors(['title']);
     }
@@ -100,14 +101,14 @@ class TaskControllerTest extends TestCase
         ]);
 
         // ACT: Отправляем GET запрос для конкретной задачи
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->getJson("/api/tasks/{$task->id}");
 
         // ASSERT: Проверяем ответ
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Task retrieved successfully',
+                'message' => __('messages.success.task_retrieved'),
             ])
             ->assertJsonFragment([
                 'id' => $task->id,
@@ -123,14 +124,14 @@ class TaskControllerTest extends TestCase
         // ARRANGE: Нет подготовки — запрашиваем несуществующую задачу
 
         // ACT: Отправляем GET запрос для несуществующего ID
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->getJson('/api/tasks/999');
 
         // ASSERT: Проверяем ошибку 404
         $response->assertStatus(404)
             ->assertJson([
                 'success' => false,
-                'message' => 'Task not found',
+                'message' => __('messages.error.task_not_found'),
             ])
             ->assertJsonStructure(['available_ids']);
     }
@@ -151,14 +152,14 @@ class TaskControllerTest extends TestCase
         ];
 
         // ACT: Отправляем PUT запрос
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->putJson("/api/tasks/{$task->id}", $data);
 
         // ASSERT: Проверяем ответ и базу
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Task updated successfully',
+                'message' => __('messages.success.task_updated'),
             ])
             ->assertJsonFragment($data);
 
@@ -176,14 +177,14 @@ class TaskControllerTest extends TestCase
         $task = Task::factory()->create();
 
         // ACT: Отправляем DELETE запрос
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->deleteJson("/api/tasks/{$task->id}");
 
         // ASSERT: Проверяем ответ и базу
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Task deleted successfully',
+                'message' => __('messages.success.task_deleted'),
             ]);
 
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
@@ -195,29 +196,38 @@ class TaskControllerTest extends TestCase
         // ARRANGE: Нет подготовки — удаляем несуществующую задачу
 
         // ACT: Отправляем DELETE запрос для несуществующего ID
-        $response = $this->withHeaders(['Accept-Language' => 'en'])
+        $response = $this->withHeaders(['Accept-Language' => config('app.locale', 'ru')])
             ->deleteJson('/api/tasks/999');
 
         // ASSERT: Проверяем ошибку 404
         $response->assertStatus(404)
             ->assertJson([
                 'success' => false,
-                'message' => 'Task not found',
+                'message' => __('messages.error.task_not_found'),
             ]);
     }
 
-    // Дополнительный тест: Проверка русского языка
+    // Дополнительный тест: Проверка переключения локали
     #[Test]
-    public function can_get_tasks_in_russian(): void
+    public function can_get_tasks_in_different_languages(): void
     {
-        // Создаем задачу
-        $task = Task::factory()->create(['title' => 'Задача']);
+        // ARRANGE: Создаем задачу
+        $task = Task::factory()->create(['title' => 'Test Task']);
 
-        // Отправляем запрос с русским языком
+        // ACT & ASSERT: Английский язык
+        $response = $this->withHeaders(['Accept-Language' => 'en'])
+            ->getJson("/api/tasks/{$task->id}");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Task retrieved successfully',
+            ]);
+
+        // ACT & ASSERT: Русский язык
         $response = $this->withHeaders(['Accept-Language' => 'ru'])
             ->getJson("/api/tasks/{$task->id}");
 
-        // Проверяем русские сообщения
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
